@@ -9,18 +9,11 @@ const infoDump = document.getElementById("infoDump");
 const progressBar = document.getElementById("progressBar");
 // The get favourites button element.
 const getFavouritesBtn = document.getElementById("getFavouritesBtn");
+// The carousel inner div element.
+const carouselInner = document.getElementById("carouselInner");
 
 // Step 0: Store your API key here for reference and easy access.
-const API_KEY = "";
-
-/**
- * 1. Create an async function "initialLoad" that does the following:
- * - Retrieve a list of breeds from the cat API using fetch().
- * - Create new <options> for each of these breeds, and append them to breedSelect.
- *  - Each option should have a value attribute equal to the id of the breed.
- *  - Each option should display text equal to the name of the breed.
- * This function should execute immediately.
- */
+const API_KEY = "live_LcqVnngJys5WqtGT2nbPHANjnKbCHTYzzVDUmlr2N50diMJIYGZQb0fkTxwbNdFn";
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
@@ -36,6 +29,120 @@ const API_KEY = "";
  * - Each new selection should clear, re-populate, and restart the Carousel.
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
+
+// Function to fetch breed information and update carousel and infoDump
+async function updateBreedInfo(breedId) {
+  try {
+    // Fetch information about the selected breed from the cat API
+    const response = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}&limit=5&api_key=${API_KEY}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch breed information");
+    }
+    const data = await response.json();
+    const breedData = data[0]?.breeds[0]; // Assuming the first object contains breed information
+
+    // Clear carouselInner and infoDump
+    carouselInner.innerHTML = "";
+    infoDump.innerHTML = "";
+
+    // Update infoDump with breed information
+    const infoHeader = document.createElement("h3");
+    infoHeader.textContent = "Breed Information";
+    infoDump.appendChild(infoHeader);
+
+    const infoList = document.createElement("ul");
+    infoList.innerHTML = `
+      <li><strong>Name:</strong> ${breedData.name}</li>
+      <li><strong>Description:</strong> ${breedData.description}</li>
+      <li><strong>Origin:</strong> ${breedData.origin}</li>
+      <li><strong>Temperament:</strong> ${breedData.temperament}</li>
+    `;
+    infoDump.appendChild(infoList);
+
+    // Update carousel with images of the breed
+    data.forEach(imageData => {
+      const carouselItem = document.createElement("div");
+      carouselItem.classList.add("carousel-item");
+
+      const image = document.createElement("img");
+      image.src = imageData.url;
+      image.classList.add("d-block", "w-100");
+      image.alt = breedData.name;
+
+      const cardBody = document.createElement("div");
+      cardBody.classList.add("card-body");
+
+      const cardTitle = document.createElement("h5");
+      cardTitle.textContent = breedData.name;
+      cardBody.appendChild(cardTitle);
+
+      carouselItem.appendChild(image);
+      carouselItem.appendChild(cardBody);
+
+      carouselInner.appendChild(carouselItem);
+    });
+
+    // Activate the first carousel item
+    carouselInner.firstElementChild.classList.add("active");
+
+  } catch (error) {
+    console.error("Error updating breed information:", error);
+  }
+}
+
+// Event listener for breedSelect
+breedSelect.addEventListener("change", function(event) {
+  const selectedBreedId = event.target.value;
+  updateBreedInfo(selectedBreedId);
+});
+
+/**
+ * 1. Create an async function "initialLoad" that does the following:
+ * - Retrieve a list of breeds from the cat API using fetch().
+ * - Create new <options> for each of these breeds, and append them to breedSelect.
+ *  - Each option should have a value attribute equal to the id of the breed.
+ *  - Each option should display text equal to the name of the breed.
+ * This function should execute immediately.
+ */
+// Function to fetch breeds and populate breedSelect
+// Function to fetch breeds and populate breedSelect
+async function initialLoad() {
+    try {
+      // Fetch list of breeds from the cat API
+      const response = await fetch("https://api.thecatapi.com/v1/breeds?limit=100&api_key=${API_KEY}");
+      if (!response.ok) {
+        throw new Error("Failed to fetch breed list");
+      }
+      const breeds = await response.json();
+      // Get data via axios.get
+      // const response = await axios.get("https://api.thecatapi.com/v1/breeds?limit=100&api_key=${API_KEY}");
+      // const breeds = response.data;
+      
+      // Clear any existing options in breedSelect
+      breedSelect.innerHTML = "";
+      
+      // Iterate over breeds and create option elements
+      breeds.forEach(breed => {
+        const option = document.createElement("option");
+        option.value = breed.id; // Set value attribute to breed ID
+        option.textContent = breed.name; // Set text content to breed name
+        breedSelect.appendChild(option); // Append option to breedSelect
+      });
+  
+      console.log("Breeds loaded successfully.");
+    // Initialize with the first breed in the select
+    if (breeds.length > 0) {
+      const firstBreedId = breeds[0].id;
+      updateBreedInfo(firstBreedId);
+    }
+
+  } catch (error) {
+    console.error("Error loading breeds:", error);
+  }
+}
+  
+  // Execute initialLoad function immediately
+  initialLoad();
 
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
